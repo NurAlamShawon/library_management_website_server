@@ -54,7 +54,7 @@ async function run() {
     const defaultBooks = [
       {
         image: "https://covers.openlibrary.org/b/id/10521236-L.jpg",
-        name: "Pride and Prejudice",
+        title: "Pride and Prejudice",
         quantity: 8,
         author: "Jane Austen",
         category: "Fiction",
@@ -66,7 +66,7 @@ async function run() {
       },
       {
         image: "https://covers.openlibrary.org/b/id/8226191-L.jpg",
-        name: "Dracula",
+        title: "Dracula",
         quantity: 6,
         author: "Bram Stoker",
         category: "Horror",
@@ -78,7 +78,7 @@ async function run() {
       },
       {
         image: "https://covers.openlibrary.org/b/id/8231856-L.jpg",
-        name: "The Time Machine",
+        title: "The Time Machine",
         quantity: 5,
         author: "H.G. Wells",
         category: "Science",
@@ -90,7 +90,7 @@ async function run() {
       },
       {
         image: "https://covers.openlibrary.org/b/id/11141529-L.jpg",
-        name: "Sapiens: A Brief History of Humankind",
+        title: "Sapiens: A Brief History of Humankind",
         quantity: 10,
         author: "Yuval Noah Harari",
         category: "History",
@@ -102,7 +102,7 @@ async function run() {
       },
       {
         image: "https://covers.openlibrary.org/b/id/5541061-L.jpg",
-        name: "Charlotte's Web",
+        title: "Charlotte's Web",
         quantity: 12,
         author: "E.B. White",
         category: "Children",
@@ -114,7 +114,7 @@ async function run() {
       },
       {
         image: "https://covers.openlibrary.org/b/id/8231995-L.jpg",
-        name: "Frankenstein",
+        title: "Frankenstein",
         quantity: 4,
         author: "Mary Shelley",
         category: "Horror",
@@ -186,10 +186,10 @@ async function run() {
 
     app.delete("/borrow/:id", async (req, res) => {
       const id = req.params.id;
-      const query = { _id: new ObjectId(id) };
+      const query = { _id: id };
       const result = await borrowcollection.deleteOne(query);
 
-      //update quantity
+      //update quantity 
       const filter = { _id: new ObjectId(id) };
       const book = req.body;
       const count = book.quantity + 1;
@@ -200,7 +200,7 @@ async function run() {
       };
 
       const option = { upset: true };
-      const result2 = await bookcollection.updateOne(filter, update, option);
+      const result2 = await bookcollection.updateOne(query, update, option);
 
       res.send(result);
     });
