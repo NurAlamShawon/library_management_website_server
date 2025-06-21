@@ -189,10 +189,11 @@ async function run() {
       const query = { _id: id };
       const result = await borrowcollection.deleteOne(query);
 
-      //update quantity 
+      //update quantity
       const filter = { _id: new ObjectId(id) };
-      const book = req.body;
+      const book = await bookcollection.findOne(filter);
       const count = book.quantity + 1;
+      console.log(count, book.quantity);
       const update = {
         $set: {
           quantity: count,
@@ -200,9 +201,9 @@ async function run() {
       };
 
       const option = { upset: true };
-      const result2 = await bookcollection.updateOne(query, update, option);
+      const result2 = await bookcollection.updateOne(filter, update, option);
 
-      res.send(result);
+      res.send(result, result2);
     });
 
     app.post("/borrow", async (req, res) => {
@@ -211,9 +212,9 @@ async function run() {
       const result = await borrowcollection.insertOne(newborrow);
 
       //update quantity
-      const id = String(req.body.id);
+      const id = String(req.body._id);
       const filter = { _id: new ObjectId(id) };
-      const book = req.body;
+      const book = await bookcollection.findOne(filter);
       const count = book.quantity - 1;
       const update = {
         $set: {
@@ -224,7 +225,7 @@ async function run() {
       const option = { upset: true };
       const result2 = await bookcollection.updateOne(filter, update, option);
 
-      res.send(result);
+      res.send(result, result2);
     });
 
     // Send a ping to confirm a successful connection
