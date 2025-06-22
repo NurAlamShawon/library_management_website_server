@@ -18,20 +18,20 @@ const client = new MongoClient(uri, {
   },
 });
 
-
 //for access token
 
 var admin = require("firebase-admin");
 
-const decoded=Buffer.from(process.env.FIRE_SERVICE_KEY ,'base64').toString('utf8')
+const decoded = Buffer.from(process.env.FIRE_SERVICE_KEY, "base64").toString(
+  "utf8"
+);
 var serviceAccount = JSON.parse(decoded);
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
 });
 
-
-//middleware for verify token 
+//middleware for verify token
 
 const verifyFirebaseToken = async (req, res, next) => {
   const authHeader = req.headers?.authorization;
@@ -43,14 +43,12 @@ const verifyFirebaseToken = async (req, res, next) => {
 
   try {
     const decode = await admin.auth().verifyIdToken(token);
-    req.decoded = decode; 
-    next();                
+    req.decoded = decode;
+    next();
   } catch (err) {
     return res.status(403).send({ message: "unauthorized" });
   }
 };
-
-
 
 //middleware for verify email
 
@@ -62,22 +60,14 @@ const verifyEmail = (req, res, next) => {
   next();
 };
 
-
-
-
-
-
-
-
-
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
-    await client.connect();
-    await client.db("admin").command({ ping: 1 });
-    console.log(
-      "Pinged your deployment. You successfully connected to MongoDB!"
-    );
+    // await client.connect();
+    // await client.db("admin").command({ ping: 1 });
+    // console.log(
+    //   "Pinged your deployment. You successfully connected to MongoDB!"
+    // );
 
     /*books*/
 
@@ -225,7 +215,7 @@ async function run() {
 
     const borrowcollection = database.collection("borrow");
 
-    app.get("/borrow",verifyFirebaseToken,verifyEmail, async (req, res) => {
+    app.get("/borrow", verifyFirebaseToken, verifyEmail, async (req, res) => {
       const email = req.query.email;
       const query = {};
       if (email) {
@@ -238,10 +228,8 @@ async function run() {
 
     app.delete("/borrow/:id", async (req, res) => {
       const id = req.params.id;
-      const query = { _id: id };
-      const result = await borrowcollection.deleteOne(query);
 
-      //update quantity
+      //update quantity of book
       const filter = { _id: new ObjectId(id) };
       const book = await bookcollection.findOne(filter);
       const count = book.quantity + 1;
@@ -255,15 +243,18 @@ async function run() {
       const option = { upset: true };
       const result2 = await bookcollection.updateOne(filter, update, option);
 
+
+
+       //delete from borrow database
+
+      const query = { _id: id };
+      const result = await borrowcollection.deleteOne(query);
+
       res.send(result, result2);
     });
 
     app.post("/borrow", async (req, res) => {
-      console.log("data posted", req.body);
-      const newborrow = req.body;
-      const result = await borrowcollection.insertOne(newborrow);
-
-      //update quantity
+      //update quantity of book
       const id = String(req.body._id);
       const filter = { _id: new ObjectId(id) };
       const book = await bookcollection.findOne(filter);
@@ -276,6 +267,13 @@ async function run() {
 
       const option = { upset: true };
       const result2 = await bookcollection.updateOne(filter, update, option);
+
+
+
+      //post to borrow database
+
+      const newborrow = req.body;
+      const result = await borrowcollection.insertOne(newborrow);
 
       res.send(result, result2);
     });
