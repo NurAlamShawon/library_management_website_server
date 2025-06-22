@@ -18,6 +18,58 @@ const client = new MongoClient(uri, {
   },
 });
 
+
+//for access token
+
+var admin = require("firebase-admin");
+
+const decoded=Buffer.from(process.env.FIRE_SERVICE_KEY ,'base64').toString('utf8')
+var serviceAccount = JSON.parse(decoded);
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+});
+
+
+//middleware for verify token 
+
+const verifyFirebaseToken = async (req, res, next) => {
+  const authHeader = req.headers?.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).send({ message: "unauthorized access" });
+  }
+
+  const token = authHeader.split(" ")[1];
+
+  try {
+    const decode = await admin.auth().verifyIdToken(token);
+    req.decoded = decode; 
+    next();                
+  } catch (err) {
+    return res.status(403).send({ message: "unauthorized" });
+  }
+};
+
+
+
+//middleware for verify email
+
+const verifyEmail = (req, res, next) => {
+  if (req.query.email !== req.decoded.email) {
+    console.log("decoded", req.decoded);
+    return res.status(403).send({ message: "unauthorized access" });
+  }
+  next();
+};
+
+
+
+
+
+
+
+
+
 async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
@@ -173,7 +225,7 @@ async function run() {
 
     const borrowcollection = database.collection("borrow");
 
-    app.get("/borrow", async (req, res) => {
+    app.get("/borrow",verifyFirebaseToken,verifyEmail, async (req, res) => {
       const email = req.query.email;
       const query = {};
       if (email) {
